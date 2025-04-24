@@ -1,5 +1,13 @@
-# LCDM_Mnu-d3 v0
-Suite of emulators for wCDM (CDM with dark energy fluid with equation of state w)
+wCDM
+====
+* Suite of emulators for wCDM (CDM with dark energy fluid with equation of state w).
+
+Version v0
+----------
+* Using a latin hypercube of 2e5 samples (`LHC2e5`).
+
+
+--
 
 
 cosmopower version:
