@@ -14,11 +14,13 @@
 
 """
 import os
+from os.path import join
 from copy import deepcopy
 import numpy as np
+from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
-import cosmopower as cp
+from cosmopower import cosmopower_NN as cp_NN, cosmopower_PCAplusNN as cp_PCA_NN
 
 from cobaya.log import LoggedError
 from cobaya.conventions import Const
@@ -34,10 +36,8 @@ T_cmb = 2.7255  # in Kelvin (as fixed in CLASS)
 class CosmoPower(BoltzmannBase):
     """CosmoPower cosmological Boltzmann emulator \\cite{SpurioMancini2022}."""
 
-    def initialize(self):
-        super().initialize()
-
-        self.path_to_cosmo_models = self.extra_args["path_to_cosmo_models"]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.cosmo_model = self.extra_args["cosmo_model"]
         self.TT_emu_name = self.extra_args.get("TT_emu_name", "TTTEEE/TT_v0")
         self.TE_emu_name = self.extra_args.get("TE_emu_name", "TTTEEE/TE_v0")
@@ -45,43 +45,34 @@ class CosmoPower(BoltzmannBase):
         self.PP_emu_name = self.extra_args.get("PP_emu_name", "PP/PP_v0")
         self.DAZ_emu_name = self.extra_args.get("DAZ_emu_name", "growth-and-distances/DAZ_v0")
         self.DER_emu_name = self.extra_args.get("DER_emu_name", "derived-parameters/DER_v0")
-        emu_path = os.path.join(self.path_to_cosmo_models, self.cosmo_model)
+        if not hasattr(self, 'python_path'):
+            raise LoggedError(self.log, "If you want to use `cosmopower4cobaya` you need to "
+                                        "specify the `python_path` in the input yaml file.")
+        emu_path = os.path.normpath(join(self.python_path, "../cosmo_models", self.cosmo_model))
         self.log.info(f"Running with the emulator located at: {emu_path}")
+
+        # CMB spectra
+        self.TT_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.TT_emu_name))
+        self.EE_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.EE_emu_name))
+        self.TE_emu = cp_PCA_NN(restore=True, restore_filename=join(emu_path, self.TE_emu_name))
+        self.PP_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PP_emu_name))
+
+        # matter power spectra
+        # self.PKL_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PKL_emu_name))
+        # self.PKNL_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PKNL_emu_name))
+
+        # redshift dependent quantities
+        self.DAZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DAZ_emu_name))
+        # self.HZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.HZ_emu_name))
+        # self.S8Z_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.S8Z_emu_name))
+
+        # derived parameters
+        self.DER_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DER_emu_name))
 
         self.outputs = []
 
-        # CMB spectra
-        self.TT_emu = cp.cosmopower_NN(restore=True,
-                                       restore_filename=os.path.join(emu_path, self.TT_emu_name))
-        self.EE_emu = cp.cosmopower_NN(restore=True,
-                                       restore_filename=os.path.join(emu_path, self.EE_emu_name))
-        self.TE_emu = cp.cosmopower_PCAplusNN(
-            restore=True,
-            restore_filename=os.path.join(emu_path, self.TE_emu_name)
-        )
-        self.PP_emu = cp.cosmopower_NN(restore=True,
-                                       restore_filename=os.path.join(emu_path, self.PP_emu_name))
-
-        # matter power spectra
-        # self.PKL_emu = cp.cosmopower_NN(restore=True,
-        #                                 restore_filename=os.path.join(emu_path, self.PKL_emu_name))
-        # self.PKNL_emu = cp.cosmopower_NN(
-        #     restore=True,
-        #     restore_filename=os.path.join(emu_path, self.PKNL_emu_name)
-        # )
-
-        # redshift dependent quantities
-        self.DAZ_emu = cp.cosmopower_NN(restore=True,
-                                        restore_filename=os.path.join(emu_path, self.DAZ_emu_name))
-        # self.HZ_emu = cp.cosmopower_NN(restore=True,
-        #                                restore_filename=os.path.join(emu_path, self.HZ_emu_name))
-        # self.S8Z_emu = cp.cosmopower_NN(restore=True,
-        #                                 restore_filename=os.path.join(emu_path, self.S8Z_emu_name))
-
-        # derived parameters
-        self.DER_emu = cp.cosmopower_NN(restore=True,
-                                        restore_filename=os.path.join(emu_path, self.DER_emu_name))
-
+    def initialize(self):
+        super().initialize()
         self.log.info(f"`cosmopower4cobaya` version {__version__} initialized.")
 
     def get_version(self):
@@ -95,7 +86,8 @@ class CosmoPower(BoltzmannBase):
             if k == "Cl":
                 self.set_cl_reqs(v)
             elif k == "angular_diameter_distance":
-                self.set_angular_distance_reqs(reqs=v)
+                if 'DAZ' not in self.outputs:
+                    self.outputs.append('DAZ')
             elif v is None:
                 self._must_provide[k] = None
             else:
@@ -108,15 +100,15 @@ class CosmoPower(BoltzmannBase):
         for XX in ["tt", "te", "ee", "pp"]:
             if XX not in self.outputs and any(XX in cl.lower() for cl in reqs):
                 self.outputs.append(XX)
-        self.lmax = max(reqs.values())
-
-    def set_angular_distance_reqs(self, reqs):
-        if 'DAZ' not in self.outputs:
-            self.outputs.append('DAZ')
-        self.zmax = max(reqs.values())
 
     def get_can_provide_params(self):
-        # List of derived parameters supported by the CosmoPower emulators.
+        """Get a list of derived parameters that this component can calculate.
+
+        Returns
+        -------
+        names : list[str]
+            List of derived parameters supported by the CosmoPower emulators.
+        """
         names = [
             'Omega_m', 'sigma8',
             'z_eq', 'tau_eq', 'k_eq',
@@ -151,9 +143,9 @@ class CosmoPower(BoltzmannBase):
     def calculate(self, state, want_derived=True, **params_values_dict):
 
         # Set parameters
-        params_dict = {}
+        params_dict: dict[str, NDArray[np.float64]] = {}
         for k, v in params_values_dict.items():
-            params_dict[self.translate_param(k)] = [v]
+            params_dict[self.translate_param(k)] = np.array([v])
 
         if 'tt' in self.outputs:
             state['tt'] = self.TT_emu.ten_to_predictions_np(params_dict)[0]
@@ -168,8 +160,8 @@ class CosmoPower(BoltzmannBase):
 
         # compute derived parameters
         if want_derived:
+            derived_params = self.get_can_provide_params()
             for p in self.output_params:
-                derived_params = self.get_can_provide_params()
                 if self.translate_param(p) not in derived_params:
                     raise LoggedError( self.log, f"Derived param not available: {p}")
 
