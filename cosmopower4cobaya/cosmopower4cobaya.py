@@ -57,21 +57,31 @@ class CosmoPower(BoltzmannBase):
         self.log.info(f"Running with the emulator located at: {emu_path}")
 
         # CMB spectra
+        f, v = self.TT_emu_name.split('/')
+        self.ell = np.loadtxt(join(emu_path, f, f"l_modes_{v.split('_')[-1]}.txt"),
+                              dtype=int)[:self.lmax-1]
         self.TT_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.TT_emu_name))
         self.EE_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.EE_emu_name))
         self.TE_emu = cp_PCA_NN(restore=True, restore_filename=join(emu_path, self.TE_emu_name))
         self.PP_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PP_emu_name))
 
         # matter power spectra
+        # f, v = self.PKNL_emu_name.split('/')
+        # self.k = np.loadtxt(join(emu_path, f, f"k_modes_{v.split('_')[-1]}.txt"))
         # self.PKL_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PKL_emu_name))
         # self.PKNL_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.PKNL_emu_name))
 
         # redshift dependent quantities
+        f, v = self.DAZ_emu_name.split('/')
+        self.z = np.loadtxt(join(emu_path, f, f"z_modes_{v.split('_')[-1]}.txt"))
         self.DAZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DAZ_emu_name))
         self.HZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.HZ_emu_name))
         # self.S8Z_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.S8Z_emu_name))
 
         # derived parameters
+        f, v = self.DER_emu_name.split('/')
+        self.derived_params = np.loadtxt(join(emu_path, f, f"derived_params_{v.split('_')[-1]}.txt"), dtype=str)
+        print(self.derived_params)
         self.DER_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DER_emu_name))
 
         self.outputs = []
@@ -117,16 +127,7 @@ class CosmoPower(BoltzmannBase):
         names : list[str]
             List of derived parameters supported by the CosmoPower emulators.
         """
-        names = [
-            'Omega_m', 'N_eff', 'sigma8', 'YHe',
-            'z_eq', 'tau_eq', 'k_eq',
-            'z_rec', 'tau_rec', 'rs_rec', 'ra_rec',
-            'z_star', 'tau_star', 'rs_star', 'ra_star',
-            'theta_star_100', 'theta_s_100',
-            'z_drag', 'tau_drag', 'rs_drag',
-            'z_reio',
-            'age', 'conformal_age',
-        ]
+        names = self.derived_params.tolist()
         for name, mapped in self.renames.items():
             if mapped in names:
                 names.append(name)
@@ -219,7 +220,6 @@ class CosmoPower(BoltzmannBase):
             raise LoggedError(self.log, "Note that the CosmoPower emulators only provide lensed "
                                         "Cl's.")
 
-        ell = np.arange(self.lmax+1)
         cls = {XX: np.zeros(self.lmax+1) for XX in self.outputs if XX in ['tt', 'te', 'ee', 'pp']}
         units_factor = self._cmb_unit_factor(units, 2.7255)  # in Kelvin (as fixed for emulators)
 
@@ -228,30 +228,27 @@ class CosmoPower(BoltzmannBase):
             units_power = float(sum(XX.count(x) for x in ['t', 'e', 'b']))
             cls[XX] *= units_factor**units_power
             if XX == 'pp':
-                ells_factor_pp = (ell * (ell + 1))**2 / (2 * np.pi) if ell_factor else 1
-                cls[XX] *= ells_factor_pp
+                ells_factor_pp = (self.ell * (self.ell + 1))**2 / (2 * np.pi) if ell_factor else 1
+                cls[XX][2:] *= ells_factor_pp
             else:
-                ells_factor = ell * (ell + 1) / (2 * np.pi) if ell_factor else 1
-                cls[XX] *= ells_factor
-        cls['ell'] = ell
+                ells_factor = self.ell * (self.ell + 1) / (2 * np.pi) if ell_factor else 1
+                cls[XX][2:] *= ells_factor
+        cls['ell'] = np.concatenate(([0, 1], self.ell))
 
         return cls
 
     def get_angular_diameter_distance(self, z):
         DAZ = deepcopy(self.current_state['DAZ'])
-        Z = np.linspace(0, 20, 4001)[1:]
-        Z2DA = interp1d(Z, DAZ, bounds_error=False, fill_value=np.nan)
+        Z2DA = interp1d(self.z[1:], DAZ, bounds_error=False, fill_value=np.nan)
         return np.atleast_1d(Z2DA(z))
 
     def get_Hubble(self, z, units="km/s/Mpc"):
         H_units_conv_factor = {"1/Mpc": 1/Const.c_km_s, "km/s/Mpc": 1}
         HZ = deepcopy(self.current_state['HZ']) * H_units_conv_factor[units]
-        Z = np.linspace(0, 20, 4001)
-        Z2H = interp1d(Z, HZ, bounds_error=False, fill_value=np.nan)
+        Z2H = interp1d(self.z, HZ, bounds_error=False, fill_value=np.nan)
         return np.atleast_1d(Z2H(z))
 
     def get_param(self, p):
-        print("get_param")
         translated = self.translate_param(p)
         if translated == 'rs_drag':
             return self.get_rs_drag()
