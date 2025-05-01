@@ -16,6 +16,7 @@
 import os
 from os.path import join
 from copy import deepcopy
+from typing import Mapping
 import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
@@ -29,21 +30,25 @@ from cobaya.theories.cosmo import BoltzmannBase
 from __init__ import __version__
 
 
-H_units_conv_factor = {"1/Mpc": 1, "km/s/Mpc": Const.c_km_s}
-T_cmb = 2.7255  # in Kelvin (as fixed in CLASS)
-
-
 class CosmoPower(BoltzmannBase):
     """CosmoPower cosmological Boltzmann emulator \\cite{SpurioMancini2022}."""
 
+    renames: Mapping[str, str] = {
+        'rdrag': 'rs_drag',
+        'r_d': 'rs_drag',
+        'z_d': 'z_drag',
+    }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.lmax = self.extra_args.get("lmax", 5000)
         self.cosmo_model = self.extra_args["cosmo_model"]
         self.TT_emu_name = self.extra_args.get("TT_emu_name", "TTTEEE/TT_v0")
         self.TE_emu_name = self.extra_args.get("TE_emu_name", "TTTEEE/TE_v0")
         self.EE_emu_name = self.extra_args.get("EE_emu_name", "TTTEEE/EE_v0")
         self.PP_emu_name = self.extra_args.get("PP_emu_name", "PP/PP_v0")
         self.DAZ_emu_name = self.extra_args.get("DAZ_emu_name", "growth-and-distances/DAZ_v0")
+        self.HZ_emu_name = self.extra_args.get("HZ_emu_name", "growth-and-distances/HZ_v0")
         self.DER_emu_name = self.extra_args.get("DER_emu_name", "derived-parameters/DER_v0")
         if not hasattr(self, 'python_path'):
             raise LoggedError(self.log, "If you want to use `cosmopower4cobaya` you need to "
@@ -63,7 +68,7 @@ class CosmoPower(BoltzmannBase):
 
         # redshift dependent quantities
         self.DAZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DAZ_emu_name))
-        # self.HZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.HZ_emu_name))
+        self.HZ_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.HZ_emu_name))
         # self.S8Z_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.S8Z_emu_name))
 
         # derived parameters
@@ -88,6 +93,9 @@ class CosmoPower(BoltzmannBase):
             elif k == "angular_diameter_distance":
                 if 'DAZ' not in self.outputs:
                     self.outputs.append('DAZ')
+            elif k == "Hubble":
+                if 'HZ' not in self.outputs:
+                    self.outputs.append('HZ')
             elif v is None:
                 self._must_provide[k] = None
             else:
@@ -110,15 +118,14 @@ class CosmoPower(BoltzmannBase):
             List of derived parameters supported by the CosmoPower emulators.
         """
         names = [
-            'Omega_m', 'sigma8',
+            'Omega_m', 'N_eff', 'sigma8', 'YHe',
             'z_eq', 'tau_eq', 'k_eq',
-            'z_rec', 'rs_rec', 'ra_rec', 'tau_rec',
-            'theta_s_100',
-            'theta_star_100', 'z_star', 'rs_star', 'ra_star', 'tau_star',
-            'z_d', 'rs_d',
+            'z_rec', 'tau_rec', 'rs_rec', 'ra_rec',
+            'z_star', 'tau_star', 'rs_star', 'ra_star',
+            'theta_star_100', 'theta_s_100',
+            'z_drag', 'tau_drag', 'rs_drag',
             'z_reio',
-            'YHe',
-            'age', 'conformal_age'
+            'age', 'conformal_age',
         ]
         for name, mapped in self.renames.items():
             if mapped in names:
@@ -148,15 +155,17 @@ class CosmoPower(BoltzmannBase):
             params_dict[self.translate_param(k)] = np.array([v])
 
         if 'tt' in self.outputs:
-            state['tt'] = self.TT_emu.ten_to_predictions_np(params_dict)[0]
+            state['tt'] = self.TT_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
         if 'te' in self.outputs:
-            state['te'] = self.TE_emu.predictions_np(params_dict)[0]
+            state['te'] = self.TE_emu.predictions_np(params_dict)[0][:self.lmax-1]
         if 'ee' in self.outputs:
-            state['ee'] = self.EE_emu.ten_to_predictions_np(params_dict)[0]
+            state['ee'] = self.EE_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
         if 'pp' in self.outputs:
-            state['pp'] = self.PP_emu.ten_to_predictions_np(params_dict)[0]
+            state['pp'] = self.PP_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
         if 'DAZ' in self.outputs:
             state['DAZ'] = self.DAZ_emu.ten_to_predictions_np(params_dict)[0]
+        if 'HZ' in self.outputs:
+            state['HZ'] = self.HZ_emu.ten_to_predictions_np(params_dict)[0]
 
         # compute derived parameters
         if want_derived:
@@ -210,21 +219,21 @@ class CosmoPower(BoltzmannBase):
             raise LoggedError(self.log, "Note that the CosmoPower emulators only provide lensed "
                                         "Cl's.")
 
-        lmax = 5000
-        ell = np.arange(lmax+1)
-        ells_factor = ell * (ell + 1) / (2 * np.pi) if ell_factor else 1
-        cls = {XX: np.zeros(lmax+1) for XX in self.outputs if XX in ['tt', 'te', 'ee', 'pp']}
-        units_factor = self._cmb_unit_factor(units, T_cmb)
+        ell = np.arange(self.lmax+1)
+        cls = {XX: np.zeros(self.lmax+1) for XX in self.outputs if XX in ['tt', 'te', 'ee', 'pp']}
+        units_factor = self._cmb_unit_factor(units, 2.7255)  # in Kelvin (as fixed for emulators)
 
         for XX in cls:
             cls[XX][2:] = current_state[XX]
             units_power = float(sum(XX.count(x) for x in ['t', 'e', 'b']))
             cls[XX] *= units_factor**units_power
-            if ell_factor:
-                if XX == 'pp':
-                    cls[XX] *= ells_factor**2 * (2 * np.pi)
-                else:
-                    cls[XX] *= ells_factor
+            if XX == 'pp':
+                ells_factor_pp = (ell * (ell + 1))**2 / (2 * np.pi) if ell_factor else 1
+                cls[XX] *= ells_factor_pp
+            else:
+                ells_factor = ell * (ell + 1) / (2 * np.pi) if ell_factor else 1
+                cls[XX] *= ells_factor
+        cls['ell'] = ell
 
         return cls
 
@@ -232,18 +241,26 @@ class CosmoPower(BoltzmannBase):
         DAZ = deepcopy(self.current_state['DAZ'])
         Z = np.linspace(0, 20, 4001)[1:]
         Z2DA = interp1d(Z, DAZ, bounds_error=False, fill_value=np.nan)
-        return Z2DA(z)
+        return np.atleast_1d(Z2DA(z))
 
-    # def get_param(self, p):
-    #     translated = self.translate_param(p)
-    #     if translated == 'rs_drag':
-    #         return self.rs_drag()
+    def get_Hubble(self, z, units="km/s/Mpc"):
+        H_units_conv_factor = {"1/Mpc": 1/Const.c_km_s, "km/s/Mpc": 1}
+        HZ = deepcopy(self.current_state['HZ']) * H_units_conv_factor[units]
+        Z = np.linspace(0, 20, 4001)
+        Z2H = interp1d(Z, HZ, bounds_error=False, fill_value=np.nan)
+        return np.atleast_1d(Z2H(z))
+
+    def get_param(self, p):
+        print("get_param")
+        translated = self.translate_param(p)
+        if translated == 'rs_drag':
+            return self.get_rs_drag()
     #
     #     if p == 'omegam':
     #         return self.Omega_m()
 
-    # def rs_drag(self):
-    #     return state["derived"]['rs_drag']
+    def get_rs_drag(self):
+        return self.current_state['derived']['rs_drag']
 
     # def Omega_m(self):
     #     params_values = self.current_state['params']
