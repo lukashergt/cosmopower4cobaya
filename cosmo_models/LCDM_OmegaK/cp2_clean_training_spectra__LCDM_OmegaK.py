@@ -33,7 +33,7 @@ print(f"{filepath_params}, model={model}, n_samples={n_samples}, batch={batch}",
 
 k_modes = np.loadtxt(f"{path}/{cube}__{model}__k_modes.txt")
 z_modes = np.loadtxt(f"{path}/{cube}__{model}__z_modes.txt")
-l_modes = np.loadtxt(f"{path}/{cube}__{model}__l_modes.txt").astype(int)
+l_modes = np.loadtxt(f"{path}/{cube}__{model}__l_modes.txt", dtype=int)
 kmax = k_modes[-1]
 zmax = z_modes[-1]
 lmax = l_modes[-1]
