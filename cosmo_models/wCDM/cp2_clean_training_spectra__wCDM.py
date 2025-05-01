@@ -19,9 +19,9 @@ assert cube[:3] == 'LHC'
 model = filename_params.split('__')[1]
 assert model == 'wCDM'
 n_samples = cube[3:]
-assert n_samples in ['1e4', '2e5']
+assert n_samples in ['1e3', '1e4', '2e5']
 n_samples = int(float(n_samples))
-assert n_samples == 10000 or n_samples == 200000
+assert n_samples == 1000 or n_samples == 10000 or n_samples == 200000
 assert path == f"{cube}__{model}"
 assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
 

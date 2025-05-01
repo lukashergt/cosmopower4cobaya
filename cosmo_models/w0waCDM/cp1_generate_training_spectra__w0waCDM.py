@@ -19,9 +19,9 @@ assert cube[:3] == 'LHC'
 model = filename_params.split('__')[1]
 assert model == 'w0waCDM'
 n_samples = cube[3:]
-assert n_samples in ['1e4', '2e5']
+assert n_samples in ['1e3', '1e4', '2e5']
 n_samples = int(float(n_samples))
-assert n_samples == 10000 or n_samples == 200000
+assert n_samples == 1000 or n_samples == 10000 or n_samples == 200000
 assert path == f"{cube}__{model}"
 assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
 
@@ -103,14 +103,14 @@ for i in range(batch_size):
     idx = batch*batch_size+i
     if (TT_array.size != 0 and TE_array.size != 0 and EE_array.size != 0 and PP_array.size != 0 and PKL_array.size != 0 and PKNL_array.size != 0 and DAZ_array.size != 0 and HZ_array.size != 0 and S8Z_array.size != 0 and DER_array.size != 0 and
         TT_array[-1, 0] >= idx and TE_array[-1, 0] >= idx and EE_array[-1, 0] >= idx and PP_array[-1, 0] >= idx and PKL_array[-1, 0] >= idx and PKNL_array[-1, 0] >= idx and DAZ_array[-1, 0] >= idx and HZ_array[-1, 0] >= idx and S8Z_array[-1, 0] >= idx and DER_array[-1, 0] >= idx):
-        print(f"batch {batch}, parameter set {idx}, param ID {params_LHC['ID'][idx]}, already done", flush=True)
+        print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]}, already done", flush=True)
         continue
     elif TT_array.size != 0 and TE_array.size != 0 and EE_array.size != 0 and PP_array.size != 0 and PKL_array.size != 0 and PKNL_array.size != 0 and DAZ_array.size != 0 and HZ_array.size != 0 and S8Z_array.size != 0 and DER_array.size != 0:
         print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]},", end=" ", flush=True)
         print("highest feature ID", np.array([TT_array[-1, 0], TE_array[-1, 0], EE_array[-1, 0], PP_array[-1, 0], PKL_array[-1, 0], PKNL_array[-1, 0], DAZ_array[-1, 0], HZ_array[-1, 0], S8Z_array[-1, 0], DER_array[-1, 0]]).astype(int), end=" ", flush=True)
         print([round(params_LHC[key][idx], 5) for key in params_LHC_keys], flush=True)
     else:
-        print(f"batch {batch}, parameter set {idx}, param ID {params_LHC['ID'][idx]}", flush=True)
+        print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]}", flush=True)
 
     # Define your cosmology (what is not specified will be set to CLASS default parameters)
     params = {
