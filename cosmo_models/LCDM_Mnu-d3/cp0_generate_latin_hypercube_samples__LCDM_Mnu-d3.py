@@ -3,24 +3,29 @@ import numpy as np
 import pyDOE as pyDOE
 
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
-n_samples = int(sys.argv[2])  # number of samples
 
 path, filename_params = filepath_params.rsplit('/', 1)
 cube = filename_params.split('__')[0]
-model = filename_params.split('__')[1]
 assert cube[:3] == 'LHC'
+model = filename_params.split('__')[1]
 assert model == 'LCDM_Mnu-d3'
+n_samples = cube[3:]
+assert n_samples in ['1e4', '2e5']
+n_samples = int(float(n_samples))
+assert n_samples == 10000 or n_samples == 200000
+assert path == f"{cube}__{model}"
+assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
 
 # parameter ranges
-omega_b   = np.linspace(0.01, 0.026, n_samples)
-omega_cdm = np.linspace(0.05, 0.30,  n_samples)
-H0        = np.linspace(30.0, 100.0, n_samples)
-tau_reio  = np.linspace(0.01, 0.20,  n_samples)
-logA      = np.linspace(2.5,  3.5,   n_samples)
-n_s       = np.linspace(0.8,  1.2,   n_samples)
-m_ncdm    = np.linspace(0.0,  1.0,   n_samples)
+omega_b   = np.linspace(0.01,  0.026, n_samples)
+omega_cdm = np.linspace(0.05,  0.30,  n_samples)
+H0        = np.linspace(30.0,  100.0, n_samples)
+tau_reio  = np.linspace(0.01,  0.20,  n_samples)
+logA      = np.linspace(2.5,   3.5,   n_samples)
+n_s       = np.linspace(0.8,   1.2,   n_samples)
+m_ncdm    = np.linspace(0.0,   1.0,   n_samples)
 
-z_pk  = np.linspace(0.0, 5.0, n_samples)
+z  = np.linspace(0.0, 5.0, n_samples)
 c_min = 3.13   # np.linspace(2.0, 4.0, n_samples)
 eta_0 = 0.603  # np.linspace(0.5, 1.0, n_samples)
 
@@ -33,7 +38,7 @@ AllParams = np.vstack([
     logA, 
     n_s, 
     m_ncdm, 
-    z_pk
+    z,
 ])
 n_params = AllParams.shape[0]
 lhd = pyDOE.lhs(n_params, samples=n_samples, criterion=None)
@@ -53,8 +58,6 @@ params = {
     'n_s': AllCombinations[:, 5],
     'm_ncdm': AllCombinations[:, 6],
     'z': AllCombinations[:, 7],
-    #'c_min': AllCombinations[:, 5],
-    #'eta_0': AllCombinations[:, 6],
 }
 
 np.savez(filepath_params, **params)

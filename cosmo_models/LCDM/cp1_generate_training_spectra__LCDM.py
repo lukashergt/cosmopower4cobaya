@@ -1,10 +1,10 @@
 import sys
 import os
-os.environ['OMP_NUM_THREADS'] = '2'
-os.environ['MKL_NUM_THREADS'] = '2'
-os.environ['OPENBLAS_NUM_THREADS'] = '2'
-os.environ['NUMEXPR_NUM_THREADS'] = '2'
-os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
+#os.environ['OMP_NUM_THREADS'] = '2'
+#os.environ['MKL_NUM_THREADS'] = '2'
+#os.environ['OPENBLAS_NUM_THREADS'] = '2'
+#os.environ['NUMEXPR_NUM_THREADS'] = '2'
+#os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
 import numpy as np
 from scipy.constants import c
 import classy
@@ -12,21 +12,28 @@ import classy
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
 batch = int(sys.argv[2])
 batch_size = 1000
-model = 'LCDM'
-cube = 'LHC1e4'
-n_samples = 10000
 
 path, filename_params = filepath_params.rsplit('/', 1)
+cube = filename_params.split('__')[0]
+assert cube[:3] == 'LHC'
+model = filename_params.split('__')[1]
+assert model == 'LCDM'
+n_samples = cube[3:]
+assert n_samples in ['1e4', '2e5']
+n_samples = int(float(n_samples))
+assert n_samples == 10000 or n_samples == 200000
+assert path == f"{cube}__{model}"
+assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
+
 params_LHC = np.load(filepath_params)
 params_LHC_keys = np.array(list(params_LHC.keys()))
 n_params = params_LHC_keys.size
-assert filename_params.split('__')[0] == cube
-assert filename_params.split('__')[1] == model
 assert params_LHC['ID'].size == n_samples
+print(f"{filepath_params}, model={model}, n_samples={n_samples}, batch={batch}", flush=True)
 
 k_modes = np.logspace(-4, 1, 501)
 z_modes = np.linspace(0, 20, 4001)
-l_modes = np.arange(2, 5001, 1)
+l_modes = np.arange(2, 5001, 1, dtype=int)
 kmax = k_modes[-1]
 zmax = z_modes[-1]
 lmax = l_modes[-1]
@@ -62,7 +69,7 @@ params_derived = [
 if batch == 0:
     np.savetxt(f"{path}/{cube}__{model}__k_modes.txt", k_modes)
     np.savetxt(f"{path}/{cube}__{model}__z_modes.txt", z_modes)
-    np.savetxt(f"{path}/{cube}__{model}__l_modes.txt", l_modes)
+    np.savetxt(f"{path}/{cube}__{model}__l_modes.txt", l_modes, fmt='%d')
     np.savetxt(f"{path}/{cube}__{model}__derived_params.txt", params_derived, fmt='%s')
 
 observables = ['TT', 'TE', 'EE', 'PP', 'PKL', 'PKNL', 'DAZ', 'HZ', 'S8Z', 'DER']
@@ -99,8 +106,9 @@ for i in range(batch_size):
         print(f"batch {batch}, parameter set {idx}, param ID {params_LHC['ID'][idx]}, already done", flush=True)
         continue
     elif TT_array.size != 0 and TE_array.size != 0 and EE_array.size != 0 and PP_array.size != 0 and PKL_array.size != 0 and PKNL_array.size != 0 and DAZ_array.size != 0 and HZ_array.size != 0 and S8Z_array.size != 0 and DER_array.size != 0:
-        print(f"batch {batch}, parameter set {idx}, param ID {params_LHC['ID'][idx]},", end=" ", flush=True)
-        print("highest feature ID", np.array([TT_array[-1, 0], TE_array[-1, 0], EE_array[-1, 0], PP_array[-1, 0], PKL_array[-1, 0], PKNL_array[-1, 0], DAZ_array[-1, 0], HZ_array[-1, 0], S8Z_array[-1, 0], DER_array[-1, 0]]).astype(int), flush=True)
+        print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]},", end=" ", flush=True)
+        print("highest feature ID", np.array([TT_array[-1, 0], TE_array[-1, 0], EE_array[-1, 0], PP_array[-1, 0], PKL_array[-1, 0], PKNL_array[-1, 0], DAZ_array[-1, 0], HZ_array[-1, 0], S8Z_array[-1, 0], DER_array[-1, 0]]).astype(int), end=" ", flush=True)
+        print([round(params_LHC[key][idx], 5) for key in params_LHC_keys], flush=True)
     else:
         print(f"batch {batch}, parameter set {idx}, param ID {params_LHC['ID'][idx]}", flush=True)
 
@@ -111,17 +119,14 @@ for i in range(batch_size):
         'non_linear':'hmcode',
         'l_max_scalars': lmax,
         'z_max_pk': zmax,
-        #'z_max_pk': 5,
         'P_k_max_1/Mpc': kmax,
         'nonlinear_min_k_max': 20.0,
         'accurate_lensing': 1,
-        #'k_max_tau0_over_l_max': 15.0,
         'k_max_tau0_over_l_max': 3.0,
         'perturbations_sampling_stepsize': 0.05,
-        #'perturbations_sampling_stepsize': 0.01,
         'N_ncdm': 1,
-        'm_ncdm': 0.06,
         'N_ur': 2.0328,
+        'm_ncdm': 0.06,
         'omega_b':     params_LHC['omega_b'][idx],
         'omega_cdm':   params_LHC['omega_cdm'][idx],
         'H0':          params_LHC['H0'][idx],
@@ -129,7 +134,7 @@ for i in range(batch_size):
         'ln_A_s_1e10': params_LHC['logA'][idx],
         'n_s':         params_LHC['n_s'][idx],
     }
-    z_idx = params_LHC['z_pk'][idx]
+    z_idx = params_LHC['z'][idx]
 
     # Set the parameters to the cosmological code
     cosmo = classy.Class()

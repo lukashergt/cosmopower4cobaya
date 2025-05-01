@@ -1,10 +1,10 @@
 import sys
 import os
-os.environ['OMP_NUM_THREADS'] = '2'
-os.environ['MKL_NUM_THREADS'] = '2'
-os.environ['OPENBLAS_NUM_THREADS'] = '2'
-os.environ['NUMEXPR_NUM_THREADS'] = '2'
-os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
+#os.environ['OMP_NUM_THREADS'] = '2'
+#os.environ['MKL_NUM_THREADS'] = '2'
+#os.environ['OPENBLAS_NUM_THREADS'] = '2'
+#os.environ['NUMEXPR_NUM_THREADS'] = '2'
+#os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
 import numpy as np
 from scipy.constants import c
 import classy
@@ -33,7 +33,7 @@ print(f"{filepath_params}, model={model}, n_samples={n_samples}, batch={batch}",
 
 k_modes = np.logspace(-4, 1, 501)
 z_modes = np.linspace(0, 20, 4001)
-l_modes = np.arange(2, 5001, 1)
+l_modes = np.arange(2, 5001, 1, dtype=int)
 kmax = k_modes[-1]
 zmax = z_modes[-1]
 lmax = l_modes[-1]
@@ -135,7 +135,7 @@ for i in range(batch_size):
         'tau_reio':    params_LHC['tau_reio'][idx],
         'ln_A_s_1e10': params_LHC['logA'][idx],
         'n_s':         params_LHC['n_s'][idx],
-        'w0_fld':      params_LHC['w'][idx],
+        'w0_fld':      params_LHC['w0_fld'][idx],
     }
     if params['w0_fld'] == -1:
         params.pop('Omega_Lambda')

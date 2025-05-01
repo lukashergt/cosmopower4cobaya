@@ -1,10 +1,10 @@
 import sys
 import os
-os.environ['OMP_NUM_THREADS'] = '2'
-os.environ['MKL_NUM_THREADS'] = '2'
-os.environ['OPENBLAS_NUM_THREADS'] = '2'
-os.environ['NUMEXPR_NUM_THREADS'] = '2'
-os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
+#os.environ['OMP_NUM_THREADS'] = '2'
+#os.environ['MKL_NUM_THREADS'] = '2'
+#os.environ['OPENBLAS_NUM_THREADS'] = '2'
+#os.environ['NUMEXPR_NUM_THREADS'] = '2'
+#os.environ['VECLIB_MAXIMUM_THREADS'] = '2'
 import numpy as np
 from scipy.constants import c
 import classy
@@ -12,17 +12,24 @@ import classy
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
 batch = int(sys.argv[2])
 batch_size = 1000
-model = 'LCDM_Mnu-d3'
-cube = 'LHC2e5'
-n_samples = 200000
 
 path, filename_params = filepath_params.rsplit('/', 1)
+cube = filename_params.split('__')[0]
+assert cube[:3] == 'LHC'
+model = filename_params.split('__')[1]
+assert model == 'LCDM_Mnu-d3'
+n_samples = cube[3:]
+assert n_samples in ['1e4', '2e5']
+n_samples = int(float(n_samples))
+assert n_samples == 10000 or n_samples == 200000
+assert path == f"{cube}__{model}"
+assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
+
 params_LHC = np.load(filepath_params)
 params_LHC_keys = np.array(list(params_LHC.keys()))
 n_params = params_LHC_keys.size
-assert filename_params.split('__')[0] == cube
-assert filename_params.split('__')[1] == model
 assert params_LHC['ID'].size == n_samples
+print(f"{filepath_params}, model={model}, n_samples={n_samples}, batch={batch}", flush=True)
 
 k_modes = np.loadtxt(f"{path}/{cube}__{model}__k_modes.txt")
 z_modes = np.loadtxt(f"{path}/{cube}__{model}__z_modes.txt")
@@ -98,14 +105,15 @@ for i in range(batch_size):
         'k_max_tau0_over_l_max': 3.0,
         'perturbations_sampling_stepsize': 0.05,
         'N_ncdm': 1,
-        'm_ncdm': 0.06,
-        'N_ur': 2.0328,
+        'N_ur': 0.00641,
+        'deg_ncdm': 3,
         'omega_b':     params_LHC['omega_b'][idx],
         'omega_cdm':   params_LHC['omega_cdm'][idx],
         'H0':          params_LHC['H0'][idx],
         'tau_reio':    params_LHC['tau_reio'][idx],
         'ln_A_s_1e10': params_LHC['logA'][idx],
         'n_s':         params_LHC['n_s'][idx],
+        'm_ncdm':      params_LHC['m_ncdm'][idx],
     }
     z_idx = params_LHC['z'][idx]
 
@@ -193,7 +201,6 @@ for i in range(batch_size):
         if DER_array[i, 0] == idx:
             pass
         else:
-        #else DER_array[i, 0] > idx:
             derived_dict = cosmo.get_current_derived_parameters(params_derived)
             derived_keys = list(derived_dict.keys())
             derived_values = np.array(list(derived_dict.values()))

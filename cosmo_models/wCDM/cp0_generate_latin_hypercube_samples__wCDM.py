@@ -17,23 +17,15 @@ assert path == f"{cube}__{model}"
 assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
 
 # parameter ranges
-omega_b     = np.linspace(0.01,  0.026, n_samples)
-omega_cdm   = np.linspace(0.05,  0.30,  n_samples)
-H0          = np.linspace(30.0,  100.0, n_samples)
-tau_reio    = np.linspace(0.01,  0.20,  n_samples)
-logA        = np.linspace(2.5,   3.5,   n_samples)
-n_s         = np.linspace(0.8,   1.2,   n_samples)
-if model == 'LCDM_Mnu-d3':
-    m_ncdm  = np.linspace(0.0,   1.0,   n_samples)
-if model == 'LCDM_OmegaK':
-    Omega_k = np.linspace(-0.15, 0.15,  n_samples)
-if model == 'wCDM':
-    w       = np.linspace(-3.0,  0.0,   n_samples)
-if model == 'w0waCDM':
-    w0      = np.linspace(-3.0,  1.0,   n_samples)
-    wa      = np.linspace(-15.0, 5.0,   n_samples)
+omega_b   = np.linspace(0.01,  0.026, n_samples)
+omega_cdm = np.linspace(0.05,  0.30,  n_samples)
+H0        = np.linspace(30.0,  100.0, n_samples)
+tau_reio  = np.linspace(0.01,  0.20,  n_samples)
+logA      = np.linspace(2.5,   3.5,   n_samples)
+n_s       = np.linspace(0.8,   1.2,   n_samples)
+w0_fld    = np.linspace(-3.0,  0.0,   n_samples)
 
-z_pk  = np.linspace(0.0, 5.0, n_samples)
+z  = np.linspace(0.0, 5.0, n_samples)
 c_min = 3.13   # np.linspace(2.0, 4.0, n_samples)
 eta_0 = 0.603  # np.linspace(0.5, 1.0, n_samples)
 
@@ -45,8 +37,8 @@ AllParams = np.vstack([
     tau_reio, 
     logA, 
     n_s, 
-    w,
-    z_pk
+    w0_fld,
+    z,
 ])
 n_params = AllParams.shape[0]
 lhd = pyDOE.lhs(n_params, samples=n_samples, criterion=None)
@@ -64,10 +56,8 @@ params = {
     'tau_reio': AllCombinations[:, 3],
     'logA': AllCombinations[:, 4],
     'n_s': AllCombinations[:, 5],
-    'w': AllCombinations[:, 6],
+    'w0_fld': AllCombinations[:, 6],
     'z': AllCombinations[:, 7],
-    #'c_min': AllCombinations[:, 5],
-    #'eta_0': AllCombinations[:, 6],
 }
 
 np.savez(filepath_params, **params)
