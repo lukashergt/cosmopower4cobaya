@@ -81,7 +81,6 @@ class CosmoPower(BoltzmannBase):
         # derived parameters
         f, v = self.DER_emu_name.split('/')
         self.derived_params = np.loadtxt(join(emu_path, f, f"derived_params_{v.split('_')[-1]}.txt"), dtype=str)
-        print(self.derived_params)
         self.DER_emu = cp_NN(restore=True, restore_filename=join(emu_path, self.DER_emu_name))
 
         self.outputs = []
