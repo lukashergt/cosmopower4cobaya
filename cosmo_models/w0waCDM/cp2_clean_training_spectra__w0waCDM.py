@@ -11,6 +11,10 @@ import classy
 
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
 batch = int(sys.argv[2])
+try:
+    input_i = int(sys.argv[3])
+except:
+    input_i = -1
 batch_size = 1000
 
 path, filename_params = filepath_params.rsplit('/', 1)
@@ -62,16 +66,16 @@ DAZ_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__DAZ_batch{batch:
 HZ_array   = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__HZ_batch{batch:03d}.dat"))
 S8Z_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__S8Z_batch{batch:03d}.dat"))
 DER_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__DER_batch{batch:03d}.dat"))
-assert TT_array[-1, 0]   == batch * batch_size + 999, print(TT_array[-1, 0])
-assert TE_array[-1, 0]   == batch * batch_size + 999, print(TE_array[-1, 0])
-assert EE_array[-1, 0]   == batch * batch_size + 999, print(EE_array[-1, 0])
-assert PP_array[-1, 0]   == batch * batch_size + 999, print(PP_array[-1, 0])
-assert PKL_array[-1, 0]  == batch * batch_size + 999, print(PKL_array[-1, 0])
-assert PKNL_array[-1, 0] == batch * batch_size + 999, print(PKNL_array[-1, 0])
-assert DAZ_array[-1, 0]  == batch * batch_size + 999, print(DAZ_array[-1, 0])
-assert HZ_array[-1, 0]   == batch * batch_size + 999, print(HZ_array[-1, 0])
-assert S8Z_array[-1, 0]  == batch * batch_size + 999, print(S8Z_array[-1, 0])
-assert DER_array[-1, 0]  == batch * batch_size + 999, print(DER_array[-1, 0])
+assert TT_array[-1, 0]   >= batch * batch_size + 990, f"{TT_array[-1, 0]}"
+assert TE_array[-1, 0]   >= batch * batch_size + 990, f"{TE_array[-1, 0]}"
+assert EE_array[-1, 0]   >= batch * batch_size + 990, f"{EE_array[-1, 0]}"
+assert PP_array[-1, 0]   >= batch * batch_size + 990, f"{PP_array[-1, 0]}"
+assert PKL_array[-1, 0]  >= batch * batch_size + 990, f"{PKL_array[-1, 0]}"
+assert PKNL_array[-1, 0] >= batch * batch_size + 990, f"{PKNL_array[-1, 0]}"
+assert DAZ_array[-1, 0]  >= batch * batch_size + 990, f"{DAZ_array[-1, 0]}"
+assert HZ_array[-1, 0]   >= batch * batch_size + 990, f"{HZ_array[-1, 0]}"
+assert S8Z_array[-1, 0]  >= batch * batch_size + 990, f"{S8Z_array[-1, 0]}"
+assert DER_array[-1, 0]  >= batch * batch_size + 990, f"{DER_array[-1, 0]}"
 # make a backup
 np.save(f"{path}/{cube}__{model}__TT_batch{batch:03d}_",   TT_array,   allow_pickle=False)
 np.save(f"{path}/{cube}__{model}__TE_batch{batch:03d}_",   TE_array,   allow_pickle=False)
@@ -85,10 +89,15 @@ np.save(f"{path}/{cube}__{model}__S8Z_batch{batch:03d}_",  S8Z_array,  allow_pic
 np.save(f"{path}/{cube}__{model}__DER_batch{batch:03d}_",  DER_array,  allow_pickle=False)
 
 for i in range(batch_size):
+    if input_i >= 0:
+        i = input_i
     idx = batch*batch_size+i
     if idx == TT_array[i, 0] == TE_array[i, 0] == EE_array[i, 0] == PP_array[i, 0] == PKL_array[i, 0] == PKNL_array[i, 0] == DAZ_array[i, 0] == HZ_array[i, 0] == S8Z_array[i, 0] == DER_array[i, 0]:
         print(f"{idx:06d}done", end=' ', flush=True)
-        continue
+        if input_i >= 0:
+            break
+        else:
+            continue
     else:
         print(flush=True)
         print(batch, np.int64([idx, TT_array[i, 0], TE_array[i, 0], EE_array[i, 0], PP_array[i, 0], PKL_array[i, 0], PKNL_array[i, 0], DAZ_array[i, 0], HZ_array[i, 0], S8Z_array[i, 0], DER_array[i, 0]]), flush=True)
@@ -103,9 +112,12 @@ for i in range(batch_size):
         'nonlinear_min_k_max': 20.0,
         'accurate_lensing': 1,
         'k_max_tau0_over_l_max': 3.0,
-        'perturbations_sampling_stepsize': 0.05,
-        'reionization_z_start_max': 100.0,
-        'perturbations_integration_stepsize': 0.05,
+        'perturbations_sampling_stepsize': 0.01,
+        'reionization_z_start_max': 50.0,
+        'perturbations_integration_stepsize': 0.01,
+        'tol_perturbations_integration': 1.e-6,
+        'tol_background_integration': 1.e-14,
+        'a_ini_over_a_today_default': 1.e-14,
         'N_ncdm': 1,
         'N_ur': 2.0328,
         'm_ncdm': 0.06,
@@ -127,12 +139,55 @@ for i in range(batch_size):
         params.pop('wa_fld')
     z_idx = params_LHC['z'][idx]
 
-    # Set the parameters to the cosmological code
-    cosmo = classy.Class()
-    cosmo.set(params)
-
     try:
-        cosmo.compute()
+        succeeded = False
+        while not succeeded:
+            try:
+                # Set the parameters to the cosmological code
+                cosmo = classy.Class()
+                cosmo.set(params)
+                cosmo.compute()
+                succeeded = True
+            except classy.CosmoComputationError as e:
+                print("succeeded =", succeeded, flush=True)
+                cosmo.struct_cleanup()
+                cosmo.empty()
+                if "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 75.:
+                    print("Changing 'reionization_z_start_max' to 75.", end=' ')
+                    params['reionization_z_start_max'] = 75.
+                elif "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 100.:
+                    print("Changing 'reionization_z_start_max' to 100.", end=' ')
+                    params['reionization_z_start_max'] = 100.
+                elif "absh <= hmin" in e.message and params['a_ini_over_a_today_default'] > 1.e-15:
+                    print("Changing 'a_ini_over_a_today_default' to 1.e-15", end=' ')
+                    params['a_ini_over_a_today_default'] = 1.e-15
+                elif "absh <= hmin" in e.message and params['a_ini_over_a_today_default'] > 1.e-22:
+                    print("Changing 'a_ini_over_a_today_default' to 1.e-22", end=' ')
+                    params['a_ini_over_a_today_default'] = 1.e-22
+                elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-5:
+                    print("Changing 'tol_perturbations_integration' to 1.e-5", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-5
+                elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-4:
+                    print("Changing 'tol_perturbations_integration' to 1.e-4", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-4
+                elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-3:
+                    print("Changing 'tol_perturbations_integration' to 1.e-3", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-3
+                elif "error in background_solve" in e.message and "absh <= hmin" in e.message and params['tol_background_integration'] < 1.e-11:
+                    print("Changing 'tol_background_integration' to 1.e-11", end=' ')
+                    params['tol_background_integration'] = 1.e-11
+                elif "error in background_solve" in e.message and "absh <= hmin" in e.message and params['tol_background_integration'] < 1.e-10:
+                    print("Changing 'tol_background_integration' to 1.e-10", end=' ')
+                    params['tol_background_integration'] = 1.e-10
+                #elif "error in background_solve" in e.message and "absh <= hmin" in e.message and 'background_evolver' not in params:
+                #    print("Changing 'background_evolver' to 0 for 'rk'")
+                #    params['tol_background_integration'] = 1.e-12
+                #    params.pop('a_ini_over_a_today_default')
+                #    params['background_evolver'] = 0
+                #    params['background_integration_stepsize'] = 0.01
+                else:
+                    raise classy.CosmoComputationError(e.message)
+        print("succeeded =", succeeded, flush=True)
 
         # CMB power spectra
         if TT_array[i, 0] != idx or TE_array[i, 0] != idx or EE_array[i, 0] != idx or PP_array[i, 0] != idx:
@@ -219,15 +274,28 @@ for i in range(batch_size):
 
     # parameter set rejected by Class
     except classy.CosmoComputationError as failure_message:
-        print(str(failure_message)+'\n')
-        print(cosmo.pars)
-        cosmo.struct_cleanup()
-        cosmo.empty()
-        break
+        TT_array =   np.vstack((TT_array[:i],   [np.full_like(TT_array[0, :],   np.nan)], TT_array[i:]))
+        TE_array =   np.vstack((TE_array[:i],   [np.full_like(TE_array[0, :],   np.nan)], TE_array[i:]))
+        EE_array =   np.vstack((EE_array[:i],   [np.full_like(EE_array[0, :],   np.nan)], EE_array[i:]))
+        PP_array =   np.vstack((PP_array[:i],   [np.full_like(PP_array[0, :],   np.nan)], PP_array[i:]))
+        PKL_array =  np.vstack((PKL_array[:i],  [np.full_like(PKL_array[0, :],  np.nan)], PKL_array[i:]))
+        PKNL_array = np.vstack((PKNL_array[:i], [np.full_like(PKNL_array[0, :], np.nan)], PKNL_array[i:]))
+        DAZ_array =  np.vstack((DAZ_array[:i],  [np.full_like(DAZ_array[0, :],  np.nan)], DAZ_array[i:]))
+        HZ_array =   np.vstack((HZ_array[:i],   [np.full_like(HZ_array[0, :],   np.nan)], HZ_array[i:]))
+        S8Z_array =  np.vstack((S8Z_array[:i],  [np.full_like(S8Z_array[0, :],  np.nan)], S8Z_array[i:]))
+        DER_array =  np.vstack((DER_array[:i],  [np.full_like(DER_array[0, :],  np.nan)], DER_array[i:]))
+        print()
+        print(failure_message.message)
+        print(params)
+        print()
+        #cosmo.struct_cleanup()
+        #cosmo.empty()
+        #break
 
     # something wrong in Class init
     except classy.CosmoSevereError as critical_message:
         print("Something went wrong when calling CLASS" + str(critical_message))
+        print(params)
         print(cosmo.pars)
         cosmo.struct_cleanup()
         cosmo.empty()
@@ -235,6 +303,8 @@ for i in range(batch_size):
     
     cosmo.struct_cleanup()
     cosmo.empty()
+    if input_i >= 0:
+        break
 
 print(batch)
 
