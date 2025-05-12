@@ -11,6 +11,10 @@ import classy
 
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
 batch = int(sys.argv[2])
+try:
+    input_i = int(sys.argv[3])
+except:
+    input_i = -1
 batch_size = 1000
 
 path, filename_params = filepath_params.rsplit('/', 1)
@@ -100,11 +104,16 @@ S8Z_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__S8Z_batch{batch:
 DER_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__DER_batch{batch:03d}.dat"))
 
 for i in range(batch_size):
+    if input_i >= 0:
+        i = input_i
     idx = batch*batch_size+i
     if (TT_array.size != 0 and TE_array.size != 0 and EE_array.size != 0 and PP_array.size != 0 and PKL_array.size != 0 and PKNL_array.size != 0 and DAZ_array.size != 0 and HZ_array.size != 0 and S8Z_array.size != 0 and DER_array.size != 0 and
         TT_array[-1, 0] >= idx and TE_array[-1, 0] >= idx and EE_array[-1, 0] >= idx and PP_array[-1, 0] >= idx and PKL_array[-1, 0] >= idx and PKNL_array[-1, 0] >= idx and DAZ_array[-1, 0] >= idx and HZ_array[-1, 0] >= idx and S8Z_array[-1, 0] >= idx and DER_array[-1, 0] >= idx):
         print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]}, already done", flush=True)
-        continue
+        if input_i >= 0:
+            break
+        else:
+            continue
     elif TT_array.size != 0 and TE_array.size != 0 and EE_array.size != 0 and PP_array.size != 0 and PKL_array.size != 0 and PKNL_array.size != 0 and DAZ_array.size != 0 and HZ_array.size != 0 and S8Z_array.size != 0 and DER_array.size != 0:
         print(f"batch {batch}, param set {idx}, param ID {params_LHC['ID'][idx]},", end=" ", flush=True)
         print("highest feature ID", np.array([TT_array[-1, 0], TE_array[-1, 0], EE_array[-1, 0], PP_array[-1, 0], PKL_array[-1, 0], PKNL_array[-1, 0], DAZ_array[-1, 0], HZ_array[-1, 0], S8Z_array[-1, 0], DER_array[-1, 0]]).astype(int), end=" ", flush=True)
@@ -320,4 +329,6 @@ for i in range(batch_size):
     
     cosmo.struct_cleanup()
     cosmo.empty()
+    if input_i >= 0:
+        break
 
