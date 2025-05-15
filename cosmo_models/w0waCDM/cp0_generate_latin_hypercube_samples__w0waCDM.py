@@ -25,8 +25,8 @@ tau_reio  = np.linspace(0.01,  0.20,  n_samples)
 logA      = np.linspace(2.5,   3.5,   n_samples)
 n_s       = np.linspace(0.8,   1.2,   n_samples)
 w_limit = 0
-w0_fld    = np.linspace(-3.0,  1.0,   n_samples)
-wa_fld    = np.linspace(-15.0, 3+w_limit, n_samples)
+w0_fld    = np.linspace(-2.0,  0.0,   n_samples)
+wa_fld    = np.linspace(-3.0, 2+w_limit, n_samples)
 # constraint at a=0: w(a) = w + wa*(1-a) < w_limit
 
 z  = np.linspace(0.0, 5.0, n_samples)
@@ -58,23 +58,9 @@ for i in range(n_params):
 # Redraw the corresponding number of lost samples uniformly (not latin hypercube).
 idx_w = 6
 idx_wa = 7
-mask = np.argwhere(AllCombinations[:, idx_w] + AllCombinations[:, idx_wa] >= w_limit).ravel()
-n_redraw = mask.size
-w_min = w0_fld.min()
-w_max = w0_fld.max()
-wa_min = wa_fld.min()
-wa_max = wa_fld.max()
-area_tri = (wa_max-(w_limit-w_max)) * (w_max-w_min) / 2
-area_rec = ((w_limit-w_max)-wa_min) * (w_max-w_min)
-area_sum = area_tri + area_rec
-redraw_tri = stats.dirichlet.rvs(alpha=np.ones(3), size=int(np.ceil(n_redraw * area_tri/area_sum)))
-redraw_tri[:, 0] = redraw_tri[:, 0] * (w_max-w_min) + w_min
-redraw_tri[:, 1] = redraw_tri[:, 1] * (wa_max-(w_limit-w_max)) + (w_limit-w_max)
-redraw_rec_w = np.random.uniform(w_min, w_max,       int(np.floor(n_redraw * area_rec/area_sum)))
-redraw_rec_wa = np.random.uniform(wa_min, (w_limit-w_max), int(np.floor(n_redraw * area_rec/area_sum)))
-redraw_all = np.vstack((redraw_tri[:, :2], np.vstack((redraw_rec_w, redraw_rec_wa)).T))
-np.random.shuffle(redraw_all)
-AllCombinations[mask, idx_w:idx_wa+1] = redraw_all
+indices_resampled = np.argwhere(AllCombinations[:, idx_w] + AllCombinations[:, idx_wa] >= w_limit).ravel()
+for i in indices_resampled:
+    AllCombinations[i, idx_wa] = np.random.uniform(wa_fld.min(), w_limit-AllCombinations[i, idx_w])
 
 # saving
 params = {
