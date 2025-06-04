@@ -144,16 +144,19 @@ class CosmoPower(BoltzmannBase):
         elif self.cosmo_model == 'wCDM':
             return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w']
         elif self.cosmo_model == 'w0waCDM':
-            return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w', 'wa']
+            return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w0_fld', 'wa_fld']
 
     # here modify if you want to bypass stuff in the class computation
     def calculate(self, state, want_derived=True, **params_values_dict):
+        #print()
+        #print(params_values_dict)
 
         # Set parameters
         params_dict: dict[str, NDArray[np.float64]] = {}
         for k, v in params_values_dict.items():
             params_dict[self.translate_param(k)] = np.array([v])
 
+        #print(params_dict)
         if 'tt' in self.outputs:
             state['tt'] = self.TT_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
         if 'te' in self.outputs:

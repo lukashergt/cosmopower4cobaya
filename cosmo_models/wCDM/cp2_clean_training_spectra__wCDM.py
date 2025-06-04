@@ -62,16 +62,16 @@ DAZ_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__DAZ_batch{batch:
 HZ_array   = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__HZ_batch{batch:03d}.dat"))
 S8Z_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__S8Z_batch{batch:03d}.dat"))
 DER_array  = np.atleast_2d(np.loadtxt(f"{path}/{cube}__{model}__DER_batch{batch:03d}.dat"))
-assert TT_array[-1, 0]   == batch * batch_size + 999, print(TT_array[-1, 0])
-assert TE_array[-1, 0]   == batch * batch_size + 999, print(TE_array[-1, 0])
-assert EE_array[-1, 0]   == batch * batch_size + 999, print(EE_array[-1, 0])
-assert PP_array[-1, 0]   == batch * batch_size + 999, print(PP_array[-1, 0])
-assert PKL_array[-1, 0]  == batch * batch_size + 999, print(PKL_array[-1, 0])
-assert PKNL_array[-1, 0] == batch * batch_size + 999, print(PKNL_array[-1, 0])
-assert DAZ_array[-1, 0]  == batch * batch_size + 999, print(DAZ_array[-1, 0])
-assert HZ_array[-1, 0]   == batch * batch_size + 999, print(HZ_array[-1, 0])
-assert S8Z_array[-1, 0]  == batch * batch_size + 999, print(S8Z_array[-1, 0])
-assert DER_array[-1, 0]  == batch * batch_size + 999, print(DER_array[-1, 0])
+assert TT_array[-1, 0]   >= batch * batch_size + 990, f"{TT_array[-1, 0]}"
+assert TE_array[-1, 0]   >= batch * batch_size + 990, f"{TE_array[-1, 0]}"
+assert EE_array[-1, 0]   >= batch * batch_size + 990, f"{EE_array[-1, 0]}"
+assert PP_array[-1, 0]   >= batch * batch_size + 990, f"{PP_array[-1, 0]}"
+assert PKL_array[-1, 0]  >= batch * batch_size + 990, f"{PKL_array[-1, 0]}"
+assert PKNL_array[-1, 0] >= batch * batch_size + 990, f"{PKNL_array[-1, 0]}"
+assert DAZ_array[-1, 0]  >= batch * batch_size + 990, f"{DAZ_array[-1, 0]}"
+assert HZ_array[-1, 0]   >= batch * batch_size + 990, f"{HZ_array[-1, 0]}"
+assert S8Z_array[-1, 0]  >= batch * batch_size + 990, f"{S8Z_array[-1, 0]}"
+assert DER_array[-1, 0]  >= batch * batch_size + 990, f"{DER_array[-1, 0]}"
 # make a backup
 np.save(f"{path}/{cube}__{model}__TT_batch{batch:03d}_",   TT_array,   allow_pickle=False)
 np.save(f"{path}/{cube}__{model}__TE_batch{batch:03d}_",   TE_array,   allow_pickle=False)

@@ -21,6 +21,12 @@ assert filepath_params == f"{path}/{cube}__{model}__parameter_file.npz"
 params_LHC = dict(np.load(filepath_params))
 params_LHC_keys = np.array(list(params_LHC.keys()))
 n_params = params_LHC_keys.size
+if model == 'LCDM':
+    assert n_params == 7
+elif model in ['LCDM_Mnu-d3', 'LCDM_OmegaK', 'wCDM']:
+    assert n_params == 8
+elif model == 'w0waCDM':
+    assert n_params == 9
 assert params_LHC['ID'].size == n_samples
 print(f"{filepath_params}, model={model}, n_samples={n_samples}", flush=True)
 

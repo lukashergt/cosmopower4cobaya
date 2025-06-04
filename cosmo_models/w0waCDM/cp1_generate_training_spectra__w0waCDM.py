@@ -133,6 +133,7 @@ for i in range(batch_size):
         'accurate_lensing': 1,
         'k_max_tau0_over_l_max': 3.0,
         'perturbations_sampling_stepsize': 0.05,
+        'a_ini_over_a_today_default': 1.e-16,
         'N_ncdm': 1,
         'N_ur': 2.0328,
         'm_ncdm': 0.06,
