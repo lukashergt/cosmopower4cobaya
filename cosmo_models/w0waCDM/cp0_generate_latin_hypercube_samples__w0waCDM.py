@@ -24,8 +24,8 @@ tau_reio  = np.linspace(0.01,  0.20,  n_samples)
 logA      = np.linspace(2.5,   3.5,   n_samples)
 n_s       = np.linspace(0.8,   1.2,   n_samples)
 w_limit = 0
-w0_fld    = np.linspace(-2.0,  0.0,   n_samples)
-wa_fld    = np.linspace(-3.0, 2+w_limit, n_samples)
+w         = np.linspace(-2.0,  0.0,   n_samples)
+wa        = np.linspace(-3.0, 2+w_limit, n_samples)
 # constraint at a=0: w(a) = w + wa*(1-a) < w_limit
 
 z  = np.linspace(0.0, 5.0, n_samples)
@@ -40,8 +40,8 @@ AllParams = np.vstack([
     tau_reio, 
     logA, 
     n_s, 
-    w0_fld,
-    wa_fld,
+    w,
+    wa,
     z,
 ])
 n_params = AllParams.shape[0]
@@ -70,8 +70,8 @@ params = {
     'tau_reio': AllCombinations[:, 3],
     'logA': AllCombinations[:, 4],
     'n_s': AllCombinations[:, 5],
-    'w0_fld': AllCombinations[:, 6],
-    'wa_fld': AllCombinations[:, 7],
+    'w': AllCombinations[:, 6],
+    'wa': AllCombinations[:, 7],
     'z': AllCombinations[:, 8],
 }
 

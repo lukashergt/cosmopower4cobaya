@@ -145,8 +145,8 @@ for i in range(batch_size):
         'tau_reio':    params_LHC['tau_reio'][idx],
         'ln_A_s_1e10': params_LHC['logA'][idx],
         'n_s':         params_LHC['n_s'][idx],
-        'w0_fld':      params_LHC['w0_fld'][idx],
-        'wa_fld':      params_LHC['wa_fld'][idx],
+        'w0_fld':      params_LHC['w'][idx],
+        'wa_fld':      params_LHC['wa'][idx],
     }
     if params['w0_fld'] == -1 and params['wa_fld'] == 0:
         params.pop('Omega_Lambda')
