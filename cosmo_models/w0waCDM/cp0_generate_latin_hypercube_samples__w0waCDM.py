@@ -1,6 +1,5 @@
 import sys
 import numpy as np
-from scipy import stats
 import pyDOE as pyDOE
 
 filepath_params = str(sys.argv[1])  # e.g. 'LHC2e5__LCDM/LHC2e5__LCDM__parameter_file.npz'
