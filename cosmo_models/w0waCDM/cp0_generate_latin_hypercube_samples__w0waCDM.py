@@ -59,7 +59,7 @@ idx_w = 6
 idx_wa = 7
 indices_resampled = np.argwhere(AllCombinations[:, idx_w] + AllCombinations[:, idx_wa] >= w_limit).ravel()
 for i in indices_resampled:
-    AllCombinations[i, idx_wa] = np.random.uniform(wa_fld.min(), w_limit-AllCombinations[i, idx_w])
+    AllCombinations[i, idx_wa] = np.random.uniform(wa.min(), w_limit-AllCombinations[i, idx_w])
 
 # saving
 params = {
