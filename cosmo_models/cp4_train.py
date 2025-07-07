@@ -27,7 +27,10 @@ assert model in ['LCDM', 'LCDM_Mnu-d3', 'LCDM_OmegaK', 'wCDM', 'w0waCDM']
 obs = filename_feature.split('__')[2].split('_')[0]
 assert obs in ['TT', 'TE', 'EE', 'PP', 'PKL', 'PKNL', 'DAZ', 'HZ', 'S8Z', 'DER']
 assert path == f"{cube}__{model}"
-assert filepath_feature == f"{path}/{cube}__{model}__{obs}_logpower.npz"
+if obs == 'TE':
+    assert filepath_feature == f"{path}/{cube}__{model}__{obs}_power.npz"
+else:
+    assert filepath_feature == f"{path}/{cube}__{model}__{obs}_logpower.npz"
 
 # checking that we are using a GPU
 device = 'gpu:0' if tf.test.is_gpu_available() else 'cpu'
