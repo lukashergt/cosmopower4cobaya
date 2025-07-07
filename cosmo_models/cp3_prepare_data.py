@@ -38,7 +38,7 @@ zmax = z_modes[-1]
 lmax = l_modes[-1]
 params_derived = list(np.loadtxt(f"{path}/{cube}__{model}__derived_params.txt", dtype=str))
 
-observables = ['TT', 'TE', 'EE', 'PP', 'PKL', 'PKNL', 'DAZ', 'HZ', 'S8Z', 'DER']
+observables = ['DER', 'TT', 'TE', 'EE', 'PP', 'PKL', 'PKNL', 'DAZ', 'HZ', 'S8Z']
 modes = {
     'TT': l_modes,
     'TE': l_modes,
