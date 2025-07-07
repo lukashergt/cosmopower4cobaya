@@ -144,7 +144,7 @@ class CosmoPower(BoltzmannBase):
         elif self.cosmo_model == 'wCDM':
             return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w']
         elif self.cosmo_model == 'w0waCDM':
-            return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w0_fld', 'wa_fld']
+            return ['omega_b', 'omega_cdm', 'H0', 'tau_reio', 'logA', 'n_s', 'w', 'wa']
 
     # here modify if you want to bypass stuff in the class computation
     def calculate(self, state, want_derived=True, **params_values_dict):
