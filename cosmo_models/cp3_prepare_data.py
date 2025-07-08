@@ -22,11 +22,11 @@ params_LHC = dict(np.load(filepath_params))
 params_LHC_keys = np.array(list(params_LHC.keys()))
 n_params = params_LHC_keys.size
 if model == 'LCDM':
-    assert n_params == 7
+    assert n_params == 8, params_LHC_keys
 elif model in ['LCDM_Mnu-d3', 'LCDM_OmegaK', 'wCDM']:
-    assert n_params == 8
+    assert n_params == 9, params_LHC_keys
 elif model == 'w0waCDM':
-    assert n_params == 9
+    assert n_params == 10, params_LHC_keys
 assert params_LHC['ID'].size == n_samples
 print(f"{filepath_params}, model={model}, n_samples={n_samples}", flush=True)
 
