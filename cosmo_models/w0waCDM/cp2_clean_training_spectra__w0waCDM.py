@@ -92,7 +92,7 @@ for i in range(batch_size):
     if input_i >= 0:
         i = input_i
     idx = batch*batch_size+i
-    if idx == TT_array[i, 0] == TE_array[i, 0] == EE_array[i, 0] == PP_array[i, 0] == PKL_array[i, 0] == PKNL_array[i, 0] == DAZ_array[i, 0] == HZ_array[i, 0] == S8Z_array[i, 0] == DER_array[i, 0]:
+    if idx in TT_array[:, 0] and idx in TE_array[:, 0] and idx in EE_array[:, 0] and idx in PP_array[:, 0] and idx in PKL_array[:, 0] and idx in PKNL_array[:, 0] and idx in DAZ_array[:, 0] and idx in HZ_array[:, 0] and idx in S8Z_array[:, 0] and idx in DER_array[:, 0]:
         print(f"{idx:06d}done", end=' ', flush=True)
         if input_i >= 0:
             break
@@ -100,7 +100,7 @@ for i in range(batch_size):
             continue
     else:
         print(flush=True)
-        print(batch, np.int64([idx, TT_array[i, 0], TE_array[i, 0], EE_array[i, 0], PP_array[i, 0], PKL_array[i, 0], PKNL_array[i, 0], DAZ_array[i, 0], HZ_array[i, 0], S8Z_array[i, 0], DER_array[i, 0]]), flush=True)
+        print(batch, i, idx, " TT:", TT_array[i-2:i+2, 0], " PKL:", PKL_array[i-2:i+2, 0], " DAZ:", DAZ_array[i-2:i+2, 0], " DER:", DER_array[i-2:i+2, 0])
     # Define your cosmology (what is not specified will be set to CLASS default parameters)
     params = {
         'output': 'tCl,pCl,lCl,mPk',
@@ -112,10 +112,7 @@ for i in range(batch_size):
         'nonlinear_min_k_max': 20.0,
         'accurate_lensing': 1,
         'k_max_tau0_over_l_max': 3.0,
-        'perturbations_sampling_stepsize': 0.01,
-        'perturbations_integration_stepsize': 0.01,
-        'tol_perturbations_integration': 1.e-4,
-        'tol_background_integration': 1.e-14,
+        'perturbations_sampling_stepsize': 0.05,
         'a_ini_over_a_today_default': 1.e-16,
         'N_ncdm': 1,
         'N_ur': 2.0328,
@@ -160,6 +157,34 @@ for i in range(batch_size):
                 elif "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 100.:
                     print("Changing 'reionization_z_start_max' to 100.", end=' ')
                     params['reionization_z_start_max'] = 100.
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and 'background_Nloga' not in params and 'tol_background_integration' not in params:
+                    print("Setting 'background_Nloga' to 100000 and 'tol_background_integration' to 1e-14 and 'perturbations_sampling_stepsize' to 0.02.", end=' ')
+#class_precision_parameter(background_Nloga,int,40000)
+#class_precision_parameter(tol_background_integration,double,1.e-10)
+                    params['background_Nloga'] = 100000
+                    params['tol_background_integration'] = 1.e-14
+                    params['perturbations_sampling_stepsize'] = 0.02
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and 'tol_perturbations_integration' not in params:
+                    print("Changing 'tol_perturbations_integration' to 1.e-6", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-6
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 1.e-5:
+                    print("Changing 'tol_perturbations_integration' to 1.e-5", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-5
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 1.e-4:
+                    print("Changing 'tol_perturbations_integration' to 1.e-4", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-4
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 2.e-4:
+                    print("Changing 'tol_perturbations_integration' to 2.e-4", end=' ')
+                    params['tol_perturbations_integration'] = 2.e-4
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 3.e-4:
+                    print("Changing 'tol_perturbations_integration' to 3.e-4", end=' ')
+                    params['tol_perturbations_integration'] = 3.e-4
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 5.e-4:
+                    print("Changing 'tol_perturbations_integration' to 5.e-4", end=' ')
+                    params['tol_perturbations_integration'] = 5.e-4
+                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and params['tol_perturbations_integration'] < 1.e-3:
+                    print("Changing 'tol_perturbations_integration' to 1.e-3", end=' ')
+                    params['tol_perturbations_integration'] = 1.e-3
                 elif "absh <= hmin" in e.message and params['a_ini_over_a_today_default'] > 1.e-17:
                     print("Changing 'a_ini_over_a_today_default' to 1.e-17", end=' ')
                     params['a_ini_over_a_today_default'] = 1.e-17
@@ -169,116 +194,111 @@ for i in range(batch_size):
                 elif "absh <= hmin" in e.message and params['a_ini_over_a_today_default'] > 1.e-25:
                     print("Changing 'a_ini_over_a_today_default' to 1.e-25", end=' ')
                     params['a_ini_over_a_today_default'] = 1.e-25
-                elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-5:
-                    print("Changing 'tol_perturbations_integration' to 1.e-5", end=' ')
-                    params['tol_perturbations_integration'] = 1.e-5
-                elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-6:
-                    print("Changing 'tol_perturbations_integration' to 1.e-6", end=' ')
-                    params['tol_perturbations_integration'] = 1.e-6
-                #elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-4:
-                #    print("Changing 'tol_perturbations_integration' to 1.e-4", end=' ')
-                #    params['tol_perturbations_integration'] = 1.e-4
-                #elif "error in perturbations_solve" in e.message and "absh <= hmin" in e.message and params['tol_perturbations_integration'] < 1.e-3:
-                #    print("Changing 'tol_perturbations_integration' to 1.e-3", end=' ')
-                #    params['tol_perturbations_integration'] = 1.e-3
                 elif "error in background_solve" in e.message and "absh <= hmin" in e.message and params['tol_background_integration'] < 1.e-11:
                     print("Changing 'tol_background_integration' to 1.e-11", end=' ')
                     params['tol_background_integration'] = 1.e-11
                 elif "error in background_solve" in e.message and "absh <= hmin" in e.message and params['tol_background_integration'] < 1.e-10:
                     print("Changing 'tol_background_integration' to 1.e-10", end=' ')
                     params['tol_background_integration'] = 1.e-10
-                #elif "error in background_solve" in e.message and "absh <= hmin" in e.message and 'background_evolver' not in params:
-                #    print("Changing 'background_evolver' to 0 for 'rk'")
-                #    params['tol_background_integration'] = 1.e-12
-                #    params.pop('a_ini_over_a_today_default')
-                #    params['background_evolver'] = 0
-                #    params['background_integration_stepsize'] = 0.01
+#                elif "error in background_solve" in e.message and "absh <= hmin" in e.message and 'background_evolver' not in params:
+#                    print("Changing 'background_evolver' to 0 for 'rk'")
+#                    params['tol_background_integration'] = 1.e-12
+#                    params.pop('a_ini_over_a_today_default')
+#                    params['background_evolver'] = 0
+#                    params['background_integration_stepsize'] = 0.01
+#                elif "error in perturbations_solve" in e.message and "condition (absh <= hmin) is true; Step size too small" in e.message and 'evolver' not in params:
+#                    print("Changing 'evolver' to rk", end=' ')
+##class_precision_parameter(perturbations_integration_stepsize,double,0.5)
+##class_precision_parameter(perturbations_sampling_stepsize,double,0.1)
+#                    params['evolver'] = 0
+#                    params['perturbations_integration_stepsize'] = 0.1
+#                    params['perturbations_sampling_stepsize'] = 0.01
                 else:
                     raise classy.CosmoComputationError(e.message)
         print("succeeded =", succeeded, flush=True)
 
         # CMB power spectra
-        if TT_array[i, 0] != idx or TE_array[i, 0] != idx or EE_array[i, 0] != idx or PP_array[i, 0] != idx:
+        if idx not in TT_array[:, 0] or idx not in TE_array[:, 0] or idx not in EE_array[:, 0] or idx not in PP_array[:, 0]:
             Cl = cosmo.lensed_cl(lmax)
         
         # TT
-        if TT_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in TT_array[:, 0]:
+            assert np.all(np.diff(TT_array[:, 0]) > 0)
+            arg = np.argwhere(idx < TT_array[:, 0]).ravel()[0]
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['tt'][2:]))
-            TT_array = np.vstack((TT_array[:i], [cosmo_array], TT_array[i:]))
+            TT_array = np.vstack((TT_array[:arg], [cosmo_array], TT_array[arg:]))
 
         # TE
-        if TE_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in TE_array[:, 0]:
+            assert np.all(np.diff(TE_array[:, 0]) > 0)
+            arg = np.argwhere(idx < TE_array[:, 0]).ravel()[0]
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['te'][2:]))
-            TE_array = np.vstack((TE_array[:i], [cosmo_array], TE_array[i:]))
+            TE_array = np.vstack((TE_array[:arg], [cosmo_array], TE_array[arg:]))
 
         # EE
-        if EE_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in EE_array[:, 0]:
+            assert np.all(np.diff(EE_array[:, 0]) > 0)
+            arg = np.argwhere(idx < EE_array[:, 0]).ravel()[0]
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['ee'][2:]))
-            EE_array = np.vstack((EE_array[:i], [cosmo_array], EE_array[i:]))
+            EE_array = np.vstack((EE_array[:arg], [cosmo_array], EE_array[arg:]))
 
         # PP
-        if PP_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in PP_array[:, 0]:
+            assert np.all(np.diff(PP_array[:, 0]) > 0)
+            arg = np.argwhere(idx < PP_array[:, 0]).ravel()[0]
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['pp'][2:]))
-            PP_array = np.vstack((PP_array[:i], [cosmo_array], PP_array[i:]))
+            PP_array = np.vstack((PP_array[:arg], [cosmo_array], PP_array[arg:]))
         
         # linear power spectrum
-        if PKL_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in PKL_array[:, 0]:
+            assert np.all(np.diff(PKL_array[:, 0]) > 0)
+            arg = np.argwhere(idx < PKL_array[:, 0]).ravel()[0]
             P_lin = np.array([cosmo.pk_lin(k=ki, z=z_idx) for ki in k_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], P_lin))
-            PKL_array = np.vstack((PKL_array[:i], [cosmo_array], PKL_array[i:]))
+            PKL_array = np.vstack((PKL_array[:arg], [cosmo_array], PKL_array[arg:]))
 
         # non linear power spectrum
-        if PKNL_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in PKNL_array[:, 0]:
+            assert np.all(np.diff(PKNL_array[:, 0]) > 0)
+            arg = np.argwhere(idx < PKNL_array[:, 0]).ravel()[0]
             P_nonlin = np.array([cosmo.pk(k=ki, z=z_idx) for ki in k_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], P_nonlin))
-            PKNL_array = np.vstack((PKNL_array[:i], [cosmo_array], PKNL_array[i:]))
+            PKNL_array = np.vstack((PKNL_array[:arg], [cosmo_array], PKNL_array[arg:]))
 
         # angular diameter distance
-        if DAZ_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in DAZ_array[:, 0]:
+            assert np.all(np.diff(DAZ_array[:, 0]) > 0)
+            arg = np.argwhere(idx < DAZ_array[:, 0]).ravel()[0]
             assert z_modes[0] == 0
             d_ang = np.array([cosmo.angular_distance(z) for z in z_modes[1:]])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], d_ang))
-            DAZ_array = np.vstack((DAZ_array[:i], [cosmo_array], DAZ_array[i:]))
+            DAZ_array = np.vstack((DAZ_array[:arg], [cosmo_array], DAZ_array[arg:]))
 
         # Hubble parameter
-        if HZ_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in HZ_array[:, 0]:
+            assert np.all(np.diff(HZ_array[:, 0]) > 0)
+            arg = np.argwhere(idx < HZ_array[:, 0]).ravel()[0]
             Hubble = np.array([cosmo.Hubble(z) * c / 1e3 for z in z_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Hubble))
-            HZ_array = np.vstack((HZ_array[:i], [cosmo_array], HZ_array[i:]))
+            HZ_array = np.vstack((HZ_array[:arg], [cosmo_array], HZ_array[arg:]))
 
         # sigma8 parameter
-        if S8Z_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in S8Z_array[:, 0]:
+            assert np.all(np.diff(S8Z_array[:, 0]) > 0)
+            arg = np.argwhere(idx < S8Z_array[:, 0]).ravel()[0]
             sigma8 = np.array([cosmo.sigma(R=8, z=z, h_units=True) for z in z_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], sigma8))
-            S8Z_array = np.vstack((S8Z_array[:i], [cosmo_array], S8Z_array[i:]))
+            S8Z_array = np.vstack((S8Z_array[:arg], [cosmo_array], S8Z_array[arg:]))
 
         # derived parameters
-        if DER_array[i, 0] == idx:
-            pass
-        else:
+        if idx not in DER_array[:, 0]:
+            assert np.all(np.diff(DER_array[:, 0]) > 0)
+            arg = np.argwhere(idx < DER_array[:, 0]).ravel()[0]
             derived_dict = cosmo.get_current_derived_parameters(params_derived)
             derived_keys = list(derived_dict.keys())
             derived_values = np.array(list(derived_dict.values()))
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], derived_values))
-            DER_array = np.vstack((DER_array[:i], [cosmo_array], DER_array[i:]))
+            DER_array = np.vstack((DER_array[:arg], [cosmo_array], DER_array[arg:]))
 
     # parameter set rejected by Class
     except classy.CosmoComputationError as failure_message:
@@ -294,7 +314,8 @@ for i in range(batch_size):
         #DER_array =  np.vstack((DER_array[:i],  [np.full_like(DER_array[0, :],  np.nan)], DER_array[i:]))
         print()
         print(failure_message.message)
-        print(params)
+        print(f"params = {params}")
+        print(cosmo.pars)
         print()
         cosmo.struct_cleanup()
         cosmo.empty()
@@ -303,7 +324,7 @@ for i in range(batch_size):
     # something wrong in Class init
     except classy.CosmoSevereError as critical_message:
         print("Something went wrong when calling CLASS" + str(critical_message))
-        print(params)
+        print(f"params = {params}")
         print(cosmo.pars)
         cosmo.struct_cleanup()
         cosmo.empty()
@@ -314,7 +335,7 @@ for i in range(batch_size):
     if input_i >= 0:
         break
 
-print(batch)
+print()
 
 np.savetxt(f"{path}/{cube}__{model}__TT_batch{batch:03d}.dat",   TT_array,   header=header['TT'])
 np.savetxt(f"{path}/{cube}__{model}__TE_batch{batch:03d}.dat",   TE_array,   header=header['TE'])
