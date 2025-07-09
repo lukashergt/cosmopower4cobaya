@@ -166,65 +166,51 @@ for i in range(batch_size):
         Cl = cosmo.lensed_cl(lmax)
         
         # TT
-        if TT_array.size != 0 and TT_array[-1, 0] >= idx:
-            pass
-        else:
+        if TT_array.size == 0 or TT_array[-1, 0] < idx:
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['tt'][2:]))
             if TT_array.size == 0:
                 TT_array = np.array([cosmo_array])
                 np.savetxt(f'{path}/{cube}__{model}__TT_batch{batch:03d}.dat', TT_array, header=f"{params_LHC_keys}, TT(ell)")
             else:
                 TT_array = np.vstack((TT_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__TT_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__TT_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # TE
-        if TE_array.size != 0 and TE_array[-1, 0] >= idx:
-            pass
-        else:
+        if TE_array.size == 0 or TE_array[-1, 0] < idx:
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['te'][2:]))
             if TE_array.size == 0:
                 TE_array = np.array([cosmo_array])
                 np.savetxt(f'{path}/{cube}__{model}__TE_batch{batch:03d}.dat', TE_array, header=f"{params_LHC_keys}, TE(ell)")
             else:
                 TE_array = np.vstack((TE_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__TE_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__TE_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # EE
-        if EE_array.size != 0 and EE_array[-1, 0] >= idx:
-            pass
-        else:
+        if EE_array.size == 0 or EE_array[-1, 0] < idx:
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['ee'][2:]))
             if EE_array.size == 0:
                 EE_array = np.array([cosmo_array])
                 np.savetxt(f'{path}/{cube}__{model}__EE_batch{batch:03d}.dat', EE_array, header=f"{params_LHC_keys}, EE(ell)")
             else:
                 EE_array = np.vstack((EE_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__EE_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__EE_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # PP
-        if PP_array.size != 0 and PP_array[-1, 0] >= idx:
-            pass
-        else:
+        if PP_array.size == 0 or PP_array[-1, 0] < idx:
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Cl['pp'][2:]))
             if PP_array.size == 0:
                 PP_array = np.array([cosmo_array])
                 np.savetxt(f'{path}/{cube}__{model}__PP_batch{batch:03d}.dat', PP_array, header=f"{params_LHC_keys}, PP(ell)")
             else:
                 PP_array = np.vstack((PP_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__PP_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__PP_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # linear power spectrum
-        if PKL_array.size != 0 and PKL_array[-1, 0] >= idx:
-            pass
-        else:
+        if PKL_array.size == 0 or PKL_array[-1, 0] < idx:
             P_lin = np.array([cosmo.pk_lin(k=ki, z=z_idx) for ki in k_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], P_lin))
             if PKL_array.size == 0:
@@ -232,14 +218,11 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__PKL_batch{batch:03d}.dat', PKL_array, header=f"{params_LHC_keys}, P_lin(k)")
             else:
                 PKL_array = np.vstack((PKL_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__PKL_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__PKL_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # non linear power spectrum
-        if PKNL_array.size != 0 and PKNL_array[-1, 0] >= idx:
-            pass
-        else:
+        if PKNL_array.size == 0 or PKNL_array[-1, 0] < idx:
             P_nonlin = np.array([cosmo.pk(k=ki, z=z_idx) for ki in k_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], P_nonlin))
             if PKNL_array.size == 0:
@@ -247,14 +230,11 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__PKNL_batch{batch:03d}.dat', PKNL_array, header=f"{params_LHC_keys}, P_nonlin(k)")
             else:
                 PKNL_array = np.vstack((PKNL_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__PKNL_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__PKNL_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # angular diameter distance
-        if DAZ_array.size != 0 and DAZ_array[-1, 0] >= idx:
-            pass
-        else:
+        if DAZ_array.size == 0 or DAZ_array[-1, 0] < idx:
             assert z_modes[0] == 0
             d_ang = np.array([cosmo.angular_distance(z) for z in z_modes[1:]])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], d_ang))
@@ -263,14 +243,11 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__DAZ_batch{batch:03d}.dat', DAZ_array, header=f"{params_LHC_keys}, d_angular(z)")
             else:
                 DAZ_array = np.vstack((DAZ_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__DAZ_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__DAZ_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # Hubble parameter
-        if HZ_array.size != 0 and HZ_array[-1, 0] >= idx:
-            pass
-        else:
+        if HZ_array.size == 0 or HZ_array[-1, 0] < idx:
             Hubble = np.array([cosmo.Hubble(z) * c / 1e3 for z in z_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], Hubble))
             if HZ_array.size == 0:
@@ -278,14 +255,11 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__HZ_batch{batch:03d}.dat', HZ_array, header=f"{params_LHC_keys}, H(z)")
             else:
                 HZ_array = np.vstack((HZ_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__HZ_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__HZ_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # sigma8 parameter
-        if S8Z_array.size != 0 and S8Z_array[-1, 0] >= idx:
-            pass
-        else:
+        if S8Z_array.size == 0 or S8Z_array[-1, 0] < idx:
             sigma8 = np.array([cosmo.sigma(R=8, z=z, h_units=True) for z in z_modes])
             cosmo_array = np.hstack(([params_LHC[param][idx] for param in params_LHC], sigma8))
             if S8Z_array.size == 0:
@@ -293,14 +267,11 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__S8Z_batch{batch:03d}.dat', S8Z_array, header=f"{params_LHC_keys}, sigma8(z)")
             else:
                 S8Z_array = np.vstack((S8Z_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__S8Z_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__S8Z_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
         # derived parameters
-        if DER_array.size != 0 and DER_array[-1, 0] >= idx:
-            pass
-        else:
+        if DER_array.size == 0 or DER_array[-1, 0] < idx:
             derived_dict = cosmo.get_current_derived_parameters(params_derived)
             derived_keys = list(derived_dict.keys())
             derived_values = np.array(list(derived_dict.values()))
@@ -310,20 +281,23 @@ for i in range(batch_size):
                 np.savetxt(f'{path}/{cube}__{model}__DER_batch{batch:03d}.dat', DER_array, header=f"{params_LHC_keys}, {derived_keys}")
             else:
                 DER_array = np.vstack((DER_array, cosmo_array))
-                f=open(f"{path}/{cube}__{model}__DER_batch{batch:03d}.dat", 'a')
-                np.savetxt(f, [cosmo_array])
-                f.close()
+                with open(f"{path}/{cube}__{model}__DER_batch{batch:03d}.dat", 'a') as f:
+                    np.savetxt(f, [cosmo_array])
 
     # parameter set rejected by Class
     except classy.CosmoComputationError as failure_message:
-        print(str(failure_message)+'\n')
+        print()
+        print(failure_message.message)
+        print(f"params = {params}")
         print(cosmo.pars)
+        print()
         cosmo.struct_cleanup()
         cosmo.empty()
 
     # something wrong in Class init
     except classy.CosmoSevereError as critical_message:
         print("Something went wrong when calling CLASS" + str(critical_message))
+        print(f"params = {params}")
         print(cosmo.pars)
         cosmo.struct_cleanup()
         cosmo.empty()
