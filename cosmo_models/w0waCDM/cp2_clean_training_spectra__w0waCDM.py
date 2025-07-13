@@ -148,9 +148,13 @@ for i in range(batch_size):
                 print("succeeded =", succeeded, flush=True)
                 cosmo.struct_cleanup()
                 cosmo.empty()
-                if "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 50.:
+                if "tau_sup < pth->tau_reio" in e.message and 'reionization_z_start_max' not in params:
                     print("Changing 'reionization_z_start_max' to 50.", end=' ')
+#class_precision_parameter(reionization_z_start_max,double,50.0) /**< Maximum starting value in z for reionization */
                     params['reionization_z_start_max'] = 50.
+                elif "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 60.:
+                    print("Changing 'reionization_z_start_max' to 60.", end=' ')
+                    params['reionization_z_start_max'] = 60.
                 elif "tau_sup < pth->tau_reio" in e.message and params['reionization_z_start_max'] < 75.:
                     print("Changing 'reionization_z_start_max' to 75.", end=' ')
                     params['reionization_z_start_max'] = 75.
