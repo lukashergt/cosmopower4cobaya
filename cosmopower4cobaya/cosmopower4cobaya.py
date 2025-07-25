@@ -114,9 +114,13 @@ class CosmoPower(BoltzmannBase):
 
     def set_cl_reqs(self, reqs):
         """Sets some common settings for lensed Cl's."""
-        for XX in ["tt", "te", "ee", "pp"]:
+        for XX in ["tt", "ee", "te", "et", "pp"]:
             if XX not in self.outputs and any(XX in cl.lower() for cl in reqs):
                 self.outputs.append(XX)
+        if "te" in self.outputs and "et" not in self.outputs:
+            self.outputs.append("et")
+        elif "et" in self.outputs and "te" not in self.outputs:
+            self.outputs.append("te")
 
     def get_can_provide_params(self):
         """Get a list of derived parameters that this component can calculate.
@@ -148,19 +152,15 @@ class CosmoPower(BoltzmannBase):
 
     # here modify if you want to bypass stuff in the class computation
     def calculate(self, state, want_derived=True, **params_values_dict):
-        #print()
-        #print(params_values_dict)
-
         # Set parameters
         params_dict: dict[str, NDArray[np.float64]] = {}
         for k, v in params_values_dict.items():
             params_dict[self.translate_param(k)] = np.array([v])
 
-        #print(params_dict)
         if 'tt' in self.outputs:
             state['tt'] = self.TT_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
-        if 'te' in self.outputs:
-            state['te'] = self.TE_emu.predictions_np(params_dict)[0][:self.lmax-1]
+        if 'te' in self.outputs or 'et' in self.outputs:
+            state['te'] = state['et'] = self.TE_emu.predictions_np(params_dict)[0][:self.lmax-1]
         if 'ee' in self.outputs:
             state['ee'] = self.EE_emu.ten_to_predictions_np(params_dict)[0][:self.lmax-1]
         if 'pp' in self.outputs:
@@ -222,7 +222,7 @@ class CosmoPower(BoltzmannBase):
             raise LoggedError(self.log, "Note that the CosmoPower emulators only provide lensed "
                                         "Cl's.")
 
-        cls = {XX: np.zeros(self.lmax+1) for XX in self.outputs if XX in ['tt', 'te', 'ee', 'pp']}
+        cls = {XX: np.zeros(self.lmax+1) for XX in self.outputs if XX in ['tt', 'ee', 'te', 'et', 'pp']}
         units_factor = self._cmb_unit_factor(units, 2.7255)  # in Kelvin (as fixed for emulators)
 
         for XX in cls:
