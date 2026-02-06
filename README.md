@@ -1,22 +1,22 @@
 # cosmopower4cobaya
 
-This is a landing repository. The actual code and development happen in a private repository.
+This is a landing repository. The actual code and development happen in the corresponding private repository, which eventually will be made public.
 
 ## Private Repository
 
 The main repository is located at:
 **https://github.com/lukashergt/cosmopower4cobaya_private**
 
-This repository is private and requires explicit access permission.
+This repository is private for now and requires explicit access permission.
 
 ## Requesting Access
 
 If you would like to access the private repository, please:
-1. Send a request to the repository owner
-2. Include your GitHub username
-3. Briefly describe your intended use case
+1. Send a request to the repository owner: [@lukashergt](https://github.com/lukashergt)
+2. Include your GitHub username.
+3. Briefly describe your intended use case.
 
-Access will be granted on an individual basis.
+Access will for now be granted only on an individual basis. 
 
 ## Resources
 
@@ -25,6 +25,6 @@ Access will be granted on an individual basis.
 
 ## About
 
-`cosmopower4cobaya` integrates CosmoPower emulators with the Cobaya framework for efficient cosmological parameter inference.
+`cosmopower4cobaya` integrates CosmoPower emulators with the [Cobaya](https://github.com/CobayaSampler/cobaya) framework for efficient cosmological parameter inference.
 
 For more information, documentation, and source code, please request access to the private repository.
