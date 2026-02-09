@@ -2,6 +2,15 @@
 
 This is a landing repository. The actual code and development happen in the corresponding private repository, which eventually will be made public.
 
+The repository holds the **emulators for CMB angular power spectra** trained with [CosmoPower](https://alessiospuriomancini.github.io/cosmopower/) of the five cosmological models: 
+* $\Lambda\mathrm{CDM}$: baseline model,
+* $\Lambda\mathrm{CDM}+\sum{m_\nu}$: extension with 3 degenerate neutrino masses,
+* $\Lambda\mathrm{CDM}+\Omega_K$: extension with non-zero spatial curvature,
+* $w\mathrm{CDM}$: extension with constant equation-of-state parameter,
+* $w_0w_a\mathrm{CDM}$: extension with evolving dark energy.
+
+**Interface with [Cobaya](https://github.com/CobayaSampler/cobaya):** Additionally, the repository hosts the code for interfacing these emulators with the sampling code and likelihood repository [Cobaya](https://github.com/CobayaSampler/cobaya).
+
 ## Private Repository
 
 The main repository is located at:
