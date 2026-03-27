@@ -14,6 +14,7 @@
 
 """
 import os
+import logging
 from os.path import join
 from copy import deepcopy
 from typing import Mapping
@@ -21,11 +22,15 @@ import numpy as np
 from numpy.typing import NDArray
 from scipy.interpolate import interp1d
 
-from cosmopower import cosmopower_NN as cp_NN, cosmopower_PCAplusNN as cp_PCA_NN
-
 from cobaya.log import LoggedError
+from cobaya.mpi import is_main_process
 from cobaya.conventions import Const
 from cobaya.theories.cosmo import BoltzmannBase
+
+if logging.root.getEffectiveLevel() > logging.DEBUG:
+    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "3")
+
+from cosmopower import cosmopower_NN as cp_NN, cosmopower_PCAplusNN as cp_PCA_NN
 
 from __init__ import __version__
 
@@ -54,7 +59,8 @@ class CosmoPower(BoltzmannBase):
             raise LoggedError(self.log, "If you want to use `cosmopower4cobaya` you need to "
                                         "specify the `python_path` in the input yaml file.")
         emu_path = os.path.normpath(join(self.python_path, "../cosmo_models", self.cosmo_model))
-        self.log.info(f"Running with the emulator located at: {emu_path}")
+        if is_main_process():
+            self.log.info(f"Running with the emulator located at: {emu_path}")
 
         # CMB spectra
         f, v = self.TT_emu_name.split('/')
@@ -87,7 +93,8 @@ class CosmoPower(BoltzmannBase):
 
     def initialize(self):
         super().initialize()
-        self.log.info(f"`cosmopower4cobaya` version {__version__} initialized.")
+        if is_main_process():
+            self.log.info(f"`cosmopower4cobaya` version {__version__} initialized.")
 
     def get_version(self):
         return __version__
