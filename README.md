@@ -1,3 +1,7 @@
+<p align="left">
+  <img src="img/logo_cosmopower4cobaya.png" alt="cosmopower4cobaya logo" width="335">
+</p>
+
 # cosmopower4cobaya
 
 This is a landing repository. The actual code and development happen in the corresponding private repository, which eventually will be made public.
